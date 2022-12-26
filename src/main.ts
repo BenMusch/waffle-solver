@@ -1,29 +1,20 @@
 import {
   Board,
   Word,
-  WordLocation,
   Direction,
   Order,
   ALL_WORD_LOCATIONS,
   INTERSECTING_LETTER_LOCATIONS,
-  getBoardItemFromLogicalLetterLocation,
   wordFromWordLocation,
 } from "./board";
+import { ALL_WORDS } from "./words";
 
 import _ from "lodash";
-import { warn } from "console";
 
 // TODO: Replace with all valid words
 // TODO: Store this as a Trie
 //          Can even be a fancy trie that indexes by remaining letters
-const VALID_WORDS = new Set([
-  "BEADY",
-  "BEAST",
-  "AVOID",
-  "ALOFT",
-  "YODEL",
-  "TOTAL",
-]);
+const VALID_WORDS = new Set(ALL_WORDS);
 
 // Encode the ordersible letters in the type system
 export type Letter =
@@ -60,7 +51,7 @@ enum Color {
   Yellow,
 }
 
-type LetterCount = Map<Letter, number>;
+type LetterCount = { [l in Letter]?: number };
 type Tile = { letter: Letter; color: Color };
 type BoardWithState = Board<Tile>;
 
@@ -106,9 +97,9 @@ type Solution = Map<Direction, Map<Order, string>>;
 type SerializedSolution = string;
 
 function letterCounts(board: BoardWithState): LetterCount {
-  const counts = new Map<Letter, number>();
+  const counts: LetterCount = {};
   for (const tile of board) {
-    counts.set(tile.letter, (counts.get(tile.letter) || 0) + 1);
+    counts[tile.letter] = (counts[tile.letter] || 0) + 1;
   }
   return counts;
 }
@@ -172,6 +163,8 @@ function tilesCouldBeWord(tiles: Word<Tile>, word: Word<Letter>) {
 }
 
 // TODO: This function is *extremely* brute force
+//
+// TODO: Add more rules about validity
 function possibleSolutionsFromBoard(
   board: BoardWithState
 ): Set<SerializedSolution> {
@@ -184,8 +177,8 @@ function possibleSolutionsFromBoard(
   //  - Eliminiate the ones which don't fit the yellow/grey
 }
 
-function wordsFittingLetters(
-  letters: Word<Letter | null>,
+function wordsFittingTiles(
+  tiles: Word<Tile>,
   possibleWords: Set<string>
 ): Set<string> {
   const possibilities = new Set<string>();
@@ -195,8 +188,14 @@ function wordsFittingLetters(
     let isMatch = true;
 
     for (let i = 0; i < 5; i++) {
-      if (letters[i] !== null) {
-        if (letters[i] !== word[i]) {
+      if (tiles[i].color === Color.Green) {
+        if (tiles[i].letter !== word[i]) {
+          isMatch = false;
+          break;
+        }
+      } else {
+        // TODO: can do more complex logic here
+        if (tiles[i].letter === word[i]) {
           isMatch = false;
           break;
         }
@@ -217,21 +216,18 @@ function _getInitialSolutionPossibilities(
   board: BoardWithState
 ): Set<SerializedSolution> {
   const possibleWords = new Map<Direction, Map<Order, Set<string>>>();
+  const solutionLetterCounts = letterCounts(board);
 
   // TODO: need to check shared letters are the same
   for (const wordLocation of ALL_WORD_LOCATIONS) {
     const wordOfTiles = wordFromWordLocation(board, wordLocation);
-
-    const greenTiles = wordOfTiles.map((tile) => {
-      return tile.color === Color.Green ? tile.letter : null;
-    }) as Word<Letter | null>;
 
     if (!possibleWords.has(wordLocation.dir)) {
       possibleWords.set(wordLocation.dir, new Map());
     }
     possibleWords
       .get(wordLocation.dir)!
-      .set(wordLocation.order, wordsFittingLetters(greenTiles, VALID_WORDS));
+      .set(wordLocation.order, wordsFittingTiles(wordOfTiles, VALID_WORDS));
   }
 
   const solutionPermutations = new Set<SerializedSolution>();
@@ -241,6 +237,9 @@ function _getInitialSolutionPossibilities(
   };
 
   // TODO this is ugly
+  // TODO: Consider an approach where we don't generate every possible solution
+  // and then filter, and instead break the moment a solution becomes invalid
+  // this would save on memory
   for (const topAcross of getWords(Direction.Across, Order.First)) {
     for (const midAcross of getWords(Direction.Across, Order.Mid)) {
       for (const botAcross of getWords(Direction.Across, Order.Last)) {
@@ -271,7 +270,16 @@ function _getInitialSolutionPossibilities(
               }
 
               // too lazy to check for duplicate words, probably not worth it
-              solutionPermutations.add(serialize(solution));
+              const serializedSolution = serialize(solution);
+              const curLetterCount: LetterCount = {};
+              for (const letter of serializedSolution) {
+                curLetterCount[letter as Letter] =
+                  (curLetterCount[letter as Letter] || 0) + 1;
+              }
+
+              if (_.isEqual(curLetterCount, solutionLetterCounts)) {
+                solutionPermutations.add(serializedSolution);
+              }
             }
           }
         }
@@ -292,6 +300,7 @@ function main(): void {
     console.log(renderSolution(serializedSolution));
     console.log("--------------------------");
   }
+  debugger;
 }
 
 main();
