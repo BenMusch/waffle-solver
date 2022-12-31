@@ -57,12 +57,23 @@ function main(): void {
 
   // TODO: figure out case where there are multiple solutions
   assert(possibleSolutions.size === 1);
-  console.log(
-    findSwaps(
-      transformBoard(START_BOARD, (t) => t.letter).join(""),
-      [...possibleSolutions.values()][0]!
-    )
-  );
+  const boardLetters = transformBoard(START_BOARD, (t) => t.letter);
+  const boardStr = boardLetters.join("");
+  const swaps = findSwaps(boardStr, [...possibleSolutions.values()][0]!);
+
+  console.log("START:");
+  console.log(renderSolution(boardStr));
+
+  for (const [from, to] of swaps) {
+    console.log(
+      `------- swap ${from}(${boardLetters[from]}) <-> ${to}(${boardLetters[to]})`
+    );
+
+    const tmp = boardLetters[from];
+    boardLetters[from] = boardLetters[to];
+    boardLetters[to] = tmp;
+    console.log(renderSolution(boardLetters.join("")));
+  }
 }
 
 main();

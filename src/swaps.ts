@@ -19,7 +19,6 @@ export function findSwaps(
   // is always 21 so doesnt really matter
 
   const startToTargetMap = _buildMapFromStartToTarget(start, end);
-  console.log(startToTargetMap);
 
   const remainingSquareNumbers = new Set<SquareNumber>();
   for (let i = 0; i < start.length; i++) {
