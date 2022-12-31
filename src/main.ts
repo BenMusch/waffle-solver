@@ -1,82 +1,34 @@
+import { Board, Color, Tile, transformBoard } from "./board";
 import {
-  Board,
-  Word,
-  Direction,
-  Order,
-  ALL_WORD_LOCATIONS,
-  INTERSECTING_LETTER_LOCATIONS,
-  wordFromWordLocation,
-} from "./board";
-import { ALL_WORDS } from "./words";
+  possibleSolutionsFromBoard,
+  renderSolution,
+  SerializedSolution,
+} from "./solution";
+import { findSwaps } from "./swaps";
+import assert from "assert";
 
-import _ from "lodash";
-
-// TODO: Replace with all valid words
-// TODO: Store this as a Trie
-//          Can even be a fancy trie that indexes by remaining letters
-const VALID_WORDS = new Set(ALL_WORDS);
-
-// Encode the ordersible letters in the type system
-export type Letter =
-  | "A"
-  | "B"
-  | "C"
-  | "D"
-  | "E"
-  | "F"
-  | "G"
-  | "H"
-  | "I"
-  | "J"
-  | "K"
-  | "L"
-  | "M"
-  | "N"
-  | "O"
-  | "P"
-  | "Q"
-  | "R"
-  | "S"
-  | "T"
-  | "U"
-  | "V"
-  | "W"
-  | "X"
-  | "Y"
-  | "Z";
-
-enum Color {
-  Grey,
-  Green,
-  Yellow,
-}
-
-type LetterCount = { [l in Letter]?: number };
-type Tile = { letter: Letter; color: Color };
-type BoardWithState = Board<Tile>;
-
-const START_BOARD: BoardWithState = [
-  { letter: "B", color: Color.Green },
-  { letter: "A", color: Color.Yellow },
+const START_BOARD: Board<Tile> = [
+  { letter: "P", color: Color.Green },
+  { letter: "D", color: Color.Grey },
   { letter: "E", color: Color.Yellow },
+  { letter: "A", color: Color.Grey },
+  { letter: "R", color: Color.Green },
+  { letter: "E", color: Color.Grey },
+  { letter: "D", color: Color.Grey },
+  { letter: "O", color: Color.Grey },
+  { letter: "W", color: Color.Yellow },
+  { letter: "E", color: Color.Yellow },
+  { letter: "A", color: Color.Green },
+  { letter: "G", color: Color.Yellow },
+  { letter: "P", color: Color.Yellow },
+  { letter: "R", color: Color.Yellow },
+  { letter: "E", color: Color.Grey },
+  { letter: "E", color: Color.Yellow },
+  { letter: "N", color: Color.Green },
+  { letter: "W", color: Color.Grey },
+  { letter: "E", color: Color.Green },
   { letter: "V", color: Color.Grey },
   { letter: "Y", color: Color.Green },
-  { letter: "S", color: Color.Yellow },
-  { letter: "T", color: Color.Yellow },
-  { letter: "I", color: Color.Grey },
-  { letter: "D", color: Color.Grey },
-  { letter: "L", color: Color.Grey },
-  { letter: "O", color: Color.Green },
-  { letter: "E", color: Color.Grey },
-  { letter: "D", color: Color.Green },
-  { letter: "E", color: Color.Yellow },
-  { letter: "O", color: Color.Grey },
-  { letter: "O", color: Color.Yellow },
-  { letter: "T", color: Color.Green },
-  { letter: "A", color: Color.Yellow },
-  { letter: "A", color: Color.Yellow },
-  { letter: "F", color: Color.Grey },
-  { letter: "L", color: Color.Green },
 ];
 
 // AI questions
@@ -92,215 +44,23 @@ const START_BOARD: BoardWithState = [
 //  - Iterate over valid tile placements, test board words, see if produces same
 //  result
 
-type Solution = Map<Direction, Map<Order, string>>;
 // Serialize solutions as a string for simple comparision and storing in sets
-type SerializedSolution = string;
-
-function letterCounts(board: BoardWithState): LetterCount {
-  const counts: LetterCount = {};
-  for (const tile of board) {
-    counts[tile.letter] = (counts[tile.letter] || 0) + 1;
-  }
-  return counts;
-}
-
-function boardFromSolution(solution: Solution): Board<Letter> {
-  return [
-    solution.get(Direction.Across)!.get(Order.First)![0]! as Letter,
-    solution.get(Direction.Across)!.get(Order.First)![1]! as Letter,
-    solution.get(Direction.Across)!.get(Order.First)![2]! as Letter,
-    solution.get(Direction.Across)!.get(Order.First)![3]! as Letter,
-    solution.get(Direction.Across)!.get(Order.First)![4]! as Letter,
-    solution.get(Direction.Down)!.get(Order.First)![1]! as Letter,
-    solution.get(Direction.Down)!.get(Order.Mid)![1]! as Letter,
-    solution.get(Direction.Down)!.get(Order.Last)![1]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Mid)![0]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Mid)![1]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Mid)![2]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Mid)![3]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Mid)![4]! as Letter,
-    solution.get(Direction.Down)!.get(Order.First)![3]! as Letter,
-    solution.get(Direction.Down)!.get(Order.Mid)![3]! as Letter,
-    solution.get(Direction.Down)!.get(Order.Last)![3]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Last)![0]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Last)![1]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Last)![2]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Last)![3]! as Letter,
-    solution.get(Direction.Across)!.get(Order.Last)![4]! as Letter,
-  ];
-}
-
-function renderSolution(solution: SerializedSolution): string {
-  return [
-    solution.slice(0, 5),
-    `${solution[5]} ${solution[6]} ${solution[7]}`,
-    solution.slice(8, 13),
-    `${solution[13]} ${solution[14]} ${solution[15]}`,
-    solution.slice(16),
-  ].join("\n");
-}
-
-function serialize(solution: Solution): SerializedSolution {
-  return boardFromSolution(solution).join("");
-}
-
-function solutionHasValidIntersections(solution: Solution) {
-  for (const [locationA, locationB] of INTERSECTING_LETTER_LOCATIONS) {
-    const wordA = solution.get(locationA.dir)!.get(locationA.order)!;
-    const wordB = solution.get(locationB.dir)!.get(locationB.order)!;
-
-    if (wordA[locationA.letterNum] !== wordB[locationB.letterNum]) {
-      return false;
-    }
-  }
-  return true;
-}
-
-// TODO: Take into account yellow tiles
-function tilesCouldBeWord(tiles: Word<Tile>, word: Word<Letter>) {
-  const tilesAsWord = tiles.map((tile) => tile.letter);
-  return _.isEqual(tilesAsWord, word);
-}
-
-// TODO: This function is *extremely* brute force
-//
-// TODO: Add more rules about validity
-function possibleSolutionsFromBoard(
-  board: BoardWithState
-): Set<SerializedSolution> {
-  return _getInitialSolutionPossibilities(board);
-  // Place all the green tiles
-  // Shuffle the yellow ones
-  // IDEA:
-  //  - Start with all possible solutions that fit the green tiles
-  //  - Eliminate ones which dont match the letter counts
-  //  - Eliminiate the ones which don't fit the yellow/grey
-}
-
-function wordsFittingTiles(
-  tiles: Word<Tile>,
-  possibleWords: Set<string>
-): Set<string> {
-  const possibilities = new Set<string>();
-
-  // TODO: This is what would most benefit from a Trie
-  for (const word of possibleWords) {
-    let isMatch = true;
-
-    for (let i = 0; i < 5; i++) {
-      if (tiles[i].color === Color.Green) {
-        if (tiles[i].letter !== word[i]) {
-          isMatch = false;
-          break;
-        }
-      } else {
-        // TODO: can do more complex logic here
-        if (tiles[i].letter === word[i]) {
-          isMatch = false;
-          break;
-        }
-      }
-    }
-
-    if (isMatch) {
-      possibilities.add(word);
-    }
-  }
-
-  return possibilities;
-}
-
-// Returns the available solutions which fit the green tiles
-// Because we iterate over valid words here, we only get valid solutions
-function _getInitialSolutionPossibilities(
-  board: BoardWithState
-): Set<SerializedSolution> {
-  const possibleWords = new Map<Direction, Map<Order, Set<string>>>();
-  const solutionLetterCounts = letterCounts(board);
-
-  // TODO: need to check shared letters are the same
-  for (const wordLocation of ALL_WORD_LOCATIONS) {
-    const wordOfTiles = wordFromWordLocation(board, wordLocation);
-
-    if (!possibleWords.has(wordLocation.dir)) {
-      possibleWords.set(wordLocation.dir, new Map());
-    }
-    possibleWords
-      .get(wordLocation.dir)!
-      .set(wordLocation.order, wordsFittingTiles(wordOfTiles, VALID_WORDS));
-  }
-
-  const solutionPermutations = new Set<SerializedSolution>();
-
-  const getWords = (dir: Direction, ord: Order) => {
-    return possibleWords.get(dir)!.get(ord)!;
-  };
-
-  // TODO this is ugly
-  // TODO: Consider an approach where we don't generate every possible solution
-  // and then filter, and instead break the moment a solution becomes invalid
-  // this would save on memory
-  for (const topAcross of getWords(Direction.Across, Order.First)) {
-    for (const midAcross of getWords(Direction.Across, Order.Mid)) {
-      for (const botAcross of getWords(Direction.Across, Order.Last)) {
-        for (const leftDown of getWords(Direction.Down, Order.First)) {
-          for (const midDown of getWords(Direction.Down, Order.Mid)) {
-            for (const rightDown of getWords(Direction.Down, Order.Last)) {
-              const solution: Solution = new Map([
-                [
-                  Direction.Across,
-                  new Map([
-                    [Order.First, topAcross],
-                    [Order.Mid, midAcross],
-                    [Order.Last, botAcross],
-                  ]),
-                ],
-                [
-                  Direction.Down,
-                  new Map([
-                    [Order.First, leftDown],
-                    [Order.Mid, midDown],
-                    [Order.Last, rightDown],
-                  ]),
-                ],
-              ]);
-
-              if (!solutionHasValidIntersections(solution)) {
-                continue;
-              }
-
-              // too lazy to check for duplicate words, probably not worth it
-              const serializedSolution = serialize(solution);
-              const curLetterCount: LetterCount = {};
-              for (const letter of serializedSolution) {
-                curLetterCount[letter as Letter] =
-                  (curLetterCount[letter as Letter] || 0) + 1;
-              }
-
-              if (_.isEqual(curLetterCount, solutionLetterCounts)) {
-                solutionPermutations.add(serializedSolution);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return solutionPermutations;
-}
-
-function isSolved(game: BoardWithState) {}
 
 function main(): void {
-  const possibleSolutionsBasedOnGreenTiles =
-    _getInitialSolutionPossibilities(START_BOARD);
+  const possibleSolutions: Set<SerializedSolution> =
+    possibleSolutionsFromBoard(START_BOARD);
 
-  for (const serializedSolution of possibleSolutionsBasedOnGreenTiles) {
+  for (const serializedSolution of possibleSolutions) {
     console.log(renderSolution(serializedSolution));
     console.log("--------------------------");
   }
-  debugger;
+
+  // TODO: figure out case where there are multiple solutions
+  assert(possibleSolutions.size === 1);
+  findSwaps(
+    transformBoard(START_BOARD, (t) => t.letter).join(""),
+    [...possibleSolutions.values()][0]!
+  );
 }
 
 main();

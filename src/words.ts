@@ -1,3 +1,6 @@
+import { Word, Color, Tile, Letter } from "./board";
+import _ from "lodash";
+
 export const ALL_WORDS = [
   "BEADY",
   "AVOID",
@@ -5763,3 +5766,96 @@ export const ALL_WORDS = [
   "BIFFY",
   "PUPAL",
 ];
+
+type TrieNodeChildren = { [l in Letter]?: TrieNode };
+
+type TrieNode = {
+  letter?: Letter;
+  byNextLetter: TrieNodeChildren;
+  words?: Set<string>;
+};
+
+const ROOT: TrieNode = { byNextLetter: {} };
+
+function insertWord(word: string) {
+  let prevNode: TrieNode = ROOT;
+
+  for (const char of word) {
+    const letter = char as Letter;
+    prevNode.byNextLetter[letter] = prevNode.byNextLetter[letter] || {
+      letter,
+      byNextLetter: {},
+    };
+
+    prevNode = prevNode.byNextLetter[letter] as TrieNode;
+  }
+
+  if (!prevNode.words) {
+    prevNode.words = new Set();
+  }
+  prevNode.words.add(word);
+}
+
+export function searchWord(tiles: Word<Tile>): Set<string> {
+  let start = Date.now();
+  buildTrieIfEmpty();
+  console.log(`Built or read trie in ${Date.now() - start}ms`);
+  let excludedLetters = new Set<Letter>();
+
+  for (const tile of tiles) {
+    if (tile.color === Color.Grey) {
+      const anyOtherOccurences = tiles.some(
+        (t) => t.letter === tile.letter && t.color !== Color.Grey
+      );
+
+      if (!anyOtherOccurences) {
+        excludedLetters.add(tile.letter);
+      }
+    }
+  }
+
+  let toSearch: Array<TrieNode> = [ROOT];
+
+  for (const tile of tiles) {
+    switch (tile.color) {
+      case Color.Green: {
+        toSearch = toSearch.flatMap(
+          (node) => node.byNextLetter[tile.letter] || []
+        );
+        break;
+      }
+      default: {
+        // TODO: some sort of special case for yellow here
+        toSearch = toSearch.flatMap((node) => {
+          const childrenToSearch: Array<TrieNode> = [];
+          for (const [letter, child] of Object.entries(node.byNextLetter)) {
+            if (
+              letter !== tile.letter &&
+              !excludedLetters.has(letter as Letter)
+            ) {
+              childrenToSearch.push(child);
+            }
+          }
+          return childrenToSearch;
+        });
+        break;
+      }
+    }
+  }
+
+  const toReturn = new Set<string>();
+  for (const node of toSearch) {
+    for (const word of node.words || []) {
+      toReturn.add(word);
+    }
+  }
+  return toReturn;
+}
+
+function buildTrieIfEmpty() {
+  if (_.isEqual(ROOT.byNextLetter, {})) {
+    for (const word of ALL_WORDS) {
+      insertWord(word);
+    }
+  }
+}
