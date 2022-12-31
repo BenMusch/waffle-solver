@@ -18,16 +18,43 @@ export function findSwaps(
   // TODO: Can optimize to index with what we lookup by but the size of the list
   // is always 21 so doesnt really matter
 
-  let squareLookup = new Array<SquareLookupEntry>();
+  const startToTargetMap = _buildMapFromStartToTarget(start, end);
+  console.log(startToTargetMap);
+
+  const remainingSquareNumbers = new Set<SquareNumber>();
   for (let i = 0; i < start.length; i++) {
-    squareLookup.push({
-      start: start[i]! as Letter,
-      end: end[i]! as Letter,
-      square: i as SquareNumber,
-    });
+    remainingSquareNumbers.add(i as SquareNumber);
   }
-  console.log(squareLookup);
-  const swaps = new Array<Swap>();
+
+  const swaps: Array<Swap> = [];
+  while (remainingSquareNumbers.size > 0) {
+    const cur = [...remainingSquareNumbers][0]!;
+    const curGroup = _buildInitialGroup(startToTargetMap, cur);
+
+    for (const sn of curGroup) {
+      remainingSquareNumbers.delete(sn);
+    }
+
+    const lookupForGroup: Array<SquareLookupEntry> = [];
+    for (const sn of curGroup) {
+      lookupForGroup.push({
+        square: sn,
+        start: start[sn] as Letter,
+        end: end[sn] as Letter,
+      });
+    }
+
+    const dividedGroup = _divideGroupFurther(lookupForGroup);
+    for (const subGroup of dividedGroup) {
+      if (subGroup.size === 1) {
+        continue;
+      }
+      let squareNumbers = [...subGroup].map((sl) => sl.square);
+      for (let i = 0; i < squareNumbers.length - 1; i++) {
+        swaps.push([squareNumbers[i], squareNumbers[i + 1]]);
+      }
+    }
+  }
 
   return swaps;
 }
@@ -35,9 +62,53 @@ export function findSwaps(
 function _buildMapFromStartToTarget(
   start: SerializedSolution,
   end: SerializedSolution
-) {}
+): Map<SquareNumber, SquareNumber> {
+  const availableEnds = new Set<SquareNumber>();
+  const toReturn = new Map<SquareNumber, SquareNumber>();
+  for (let i = 0; i < start.length; i++) {
+    availableEnds.add(i as SquareNumber);
+  }
 
-function findSwapsBasedOnLookup(
+  for (let i = 0; i < start.length; i++) {
+    if (start[i] === end[i]) {
+      availableEnds.delete(i as SquareNumber);
+      toReturn.set(i as SquareNumber, i as SquareNumber);
+      continue;
+    }
+
+    for (let j = 0; j < start.length; j++) {
+      if (
+        !availableEnds.has(j as SquareNumber) ||
+        start[j] === end[j] ||
+        start[i] !== end[j]
+      ) {
+        continue;
+      }
+
+      toReturn.set(i as SquareNumber, j as SquareNumber);
+      availableEnds.delete(j as SquareNumber);
+      break;
+    }
+  }
+
+  assert(availableEnds.size === 0);
+  return toReturn;
+}
+
+function _buildInitialGroup(
+  map: Map<SquareNumber, SquareNumber>,
+  start: SquareNumber
+): Set<SquareNumber> {
+  let cur = start;
+  const group = new Set<SquareNumber>();
+  while (!group.has(cur)) {
+    group.add(cur);
+    cur = map.get(cur)!;
+  }
+  return group;
+}
+
+function _divideGroupFurther(
   squareLookup: Array<SquareLookupEntry>
 ): Set<Set<SquareLookupEntry>> {
   const groups = new Set<Set<SquareLookupEntry>>();
@@ -58,11 +129,7 @@ function findSwapsBasedOnLookup(
           return sl.start === cur.end && sl.start !== sl.end;
         });
 
-        if (candidatesForNext.length === 0) {
-          console.log(cur);
-          console.log(squareLookup);
-          assert(false);
-        }
+        assert(candidatesForNext.length !== 0);
 
         const finalSquare = candidatesForNext.find((sl) =>
           seenLetters.has(sl.end)
@@ -79,15 +146,13 @@ function findSwapsBasedOnLookup(
       }
     }
 
-    console.log(curGroup);
-    groups.add(curGroup);
-
     for (const entry of curGroup) {
       squareLookup = squareLookup.filter((sl) => {
         return !_.isEqual(sl, entry);
       });
     }
+
+    groups.add(curGroup);
   }
-  console.log(groups);
   return groups;
 }

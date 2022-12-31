@@ -9,26 +9,26 @@ import assert from "assert";
 
 const START_BOARD: Board<Tile> = [
   { letter: "P", color: Color.Green },
-  { letter: "D", color: Color.Grey },
+  { letter: "A", color: Color.Green },
   { letter: "E", color: Color.Yellow },
-  { letter: "A", color: Color.Grey },
+  { letter: "U", color: Color.Grey },
   { letter: "R", color: Color.Green },
   { letter: "E", color: Color.Grey },
-  { letter: "D", color: Color.Grey },
-  { letter: "O", color: Color.Grey },
-  { letter: "W", color: Color.Yellow },
+  { letter: "L", color: Color.Grey },
+  { letter: "O", color: Color.Yellow },
+  { letter: "G", color: Color.Grey },
+  { letter: "Y", color: Color.Yellow },
+  { letter: "I", color: Color.Green },
+  { letter: "R", color: Color.Grey },
+  { letter: "M", color: Color.Grey },
+  { letter: "N", color: Color.Grey },
+  { letter: "M", color: Color.Green },
+  { letter: "F", color: Color.Grey },
+  { letter: "P", color: Color.Green },
   { letter: "E", color: Color.Yellow },
-  { letter: "A", color: Color.Green },
-  { letter: "G", color: Color.Yellow },
-  { letter: "P", color: Color.Yellow },
   { letter: "R", color: Color.Yellow },
-  { letter: "E", color: Color.Grey },
-  { letter: "E", color: Color.Yellow },
+  { letter: "A", color: Color.Grey },
   { letter: "N", color: Color.Green },
-  { letter: "W", color: Color.Grey },
-  { letter: "E", color: Color.Green },
-  { letter: "V", color: Color.Grey },
-  { letter: "Y", color: Color.Green },
 ];
 
 // AI questions
@@ -57,9 +57,11 @@ function main(): void {
 
   // TODO: figure out case where there are multiple solutions
   assert(possibleSolutions.size === 1);
-  findSwaps(
-    transformBoard(START_BOARD, (t) => t.letter).join(""),
-    [...possibleSolutions.values()][0]!
+  console.log(
+    findSwaps(
+      transformBoard(START_BOARD, (t) => t.letter).join(""),
+      [...possibleSolutions.values()][0]!
+    )
   );
 }
 
