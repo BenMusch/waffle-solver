@@ -1,7 +1,6 @@
 import { SquareNumber, Letter } from "./board";
 import { SerializedSolution } from "./solution";
 import _ from "lodash";
-import assert from "assert";
 
 export type Swap = [SquareNumber, SquareNumber];
 
@@ -50,7 +49,13 @@ export function findSwaps(
       }
       let squareNumbers = [...subGroup].map((sl) => sl.square);
       for (let i = 0; i < squareNumbers.length - 1; i++) {
-        swaps.push([squareNumbers[i], squareNumbers[i + 1]]);
+        let swap: Swap;
+        if (squareNumbers[i] < squareNumbers[i + 1]) {
+          swap = [squareNumbers[i], squareNumbers[i + 1]];
+        } else {
+          swap = [squareNumbers[i + 1], squareNumbers[i]];
+        }
+        swaps.push(swap);
       }
     }
   }
@@ -90,7 +95,6 @@ function _buildMapFromStartToTarget(
     }
   }
 
-  assert(availableEnds.size === 0);
   return toReturn;
 }
 
@@ -127,8 +131,6 @@ function _divideGroupFurther(
         const candidatesForNext = squareLookup.filter((sl) => {
           return sl.start === cur.end && sl.start !== sl.end;
         });
-
-        assert(candidatesForNext.length !== 0);
 
         const finalSquare = candidatesForNext.find((sl) =>
           seenLetters.has(sl.end)

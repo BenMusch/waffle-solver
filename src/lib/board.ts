@@ -1,5 +1,3 @@
-import assert from "assert";
-
 export const BOARD_SIZE = 21;
 // Represents all ordersible placements of a letter on the grid, numbers from
 // left-to-right top-to-bottom
@@ -215,8 +213,26 @@ export function getBoardItemFromLogicalLetterLocation<T>(
     SQUARE_NUMBERS_BY_LOGICAL_LETTER_LOCATION[letterLoc.dir][letterLoc.order][
       letterLoc.letterNum
     ];
-  assert(i !== undefined);
   return board[i];
+}
+
+export function getColorOfSquare(
+  letter: Letter,
+  solutionBoard: Board<Letter>,
+  squareNumber: SquareNumber
+): Color {
+  const letterLocations = LETTER_LOCATIONS_BY_SQUARE_NUMBER.get(squareNumber)!;
+
+  for (const letterLoc of letterLocations) {
+    const word = wordFromWordLocation(solutionBoard, letterLoc);
+    if (word[letterLoc.letterNum] === letter) {
+      return Color.Green;
+    } else if (word.some((l) => l === letter)) {
+      return Color.Yellow;
+    }
+  }
+
+  return Color.Grey;
 }
 
 export function wordFromWordLocation<T>(
