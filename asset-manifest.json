@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/waffle-solver/static/css/main.073c9b0a.css",
+    "main.js": "/waffle-solver/static/js/main.d66af994.js",
+    "static/js/787.95a1fb30.chunk.js": "/waffle-solver/static/js/787.95a1fb30.chunk.js",
+    "index.html": "/waffle-solver/index.html",
+    "main.073c9b0a.css.map": "/waffle-solver/static/css/main.073c9b0a.css.map",
+    "main.d66af994.js.map": "/waffle-solver/static/js/main.d66af994.js.map",
+    "787.95a1fb30.chunk.js.map": "/waffle-solver/static/js/787.95a1fb30.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.073c9b0a.css",
+    "static/js/main.d66af994.js"
+  ]
+}
