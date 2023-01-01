@@ -36,6 +36,12 @@ export enum Direction {
   Down,
 }
 
+export enum Color {
+  Grey,
+  Green,
+  Yellow,
+}
+
 // Represents the location of a letter in a word from left-to-right
 export type LetterNumber = 0 | 1 | 2 | 3 | 4;
 // Identifies a unique word
@@ -139,18 +145,6 @@ const SQUARE_NUMBERS_BY_LOGICAL_LETTER_LOCATION: WordLookup<SquareNumber> = {
     [Order.Last]: [4, 7, 12, 15, 20],
   },
 };
-
-export const INTERSECTING_LETTER_LOCATIONS = [
-  [TOP_ACR_1, LEFT_DOWN_1],
-  [TOP_ACR_3, MID_DOWN_1],
-  [TOP_ACR_5, RIGHT_DOWN_1],
-  [MID_ACR_1, LEFT_DOWN_3],
-  [MID_ACR_3, MID_DOWN_3],
-  [MID_ACR_5, RIGHT_DOWN_3],
-  [BOT_ACR_1, LEFT_DOWN_5],
-  [BOT_ACR_3, MID_DOWN_5],
-  [BOT_ACR_5, RIGHT_DOWN_5],
-];
 
 export const LETTER_LOCATIONS_BY_SQUARE_NUMBER: Map<
   SquareNumber,
@@ -293,9 +287,3 @@ export type Letter =
   | "Z";
 
 export type Tile = { letter: Letter; color: Color };
-
-export enum Color {
-  Grey,
-  Green,
-  Yellow,
-}

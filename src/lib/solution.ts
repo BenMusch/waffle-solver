@@ -7,9 +7,7 @@ import {
   Direction,
   Order,
   ALL_WORD_LOCATIONS,
-  INTERSECTING_LETTER_LOCATIONS,
   wordFromWordLocation,
-  Color,
   Tile,
   Letter,
 } from "./board";

@@ -128,15 +128,19 @@ function _divideGroupFurther(
         seenLetters.add(cur.start);
         curGroup.add(cur);
 
-        const candidatesForNext = squareLookup.filter((sl) => {
-          return sl.start === cur.end && sl.start !== sl.end;
-        });
+        const candidatesForNext = new Set<SquareLookupEntry>();
+        let finalSquare: SquareLookupEntry | null = null;
+        for (const sl of squareLookup) {
+          if (sl.start === cur.end && sl.start !== sl.end) {
+            if (seenLetters.has(sl.end)) {
+              finalSquare = sl;
+              break;
+            }
+            candidatesForNext.add(sl);
+          }
+        }
 
-        const finalSquare = candidatesForNext.find((sl) =>
-          seenLetters.has(sl.end)
-        );
-
-        if (finalSquare !== undefined) {
+        if (finalSquare !== null) {
           curGroup.add(finalSquare);
           break;
         } else {
