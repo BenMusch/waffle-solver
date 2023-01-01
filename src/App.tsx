@@ -419,11 +419,7 @@ class App extends React.Component<
             onBoardChange={(board) => this.setState({ board })}
           />
           <h2>
-            Solution{" "}
-            <a href="javascript:void(0)" onClick={applyNextSwap}>
-              (apply next swap)
-            </a>
-            :
+            Solution <a onClick={applyNextSwap}>(apply next swap)</a>:
           </h2>
           <ol>
             {this.state.swaps.map((swap) => {
