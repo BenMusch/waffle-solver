@@ -420,7 +420,7 @@ class App extends React.Component<
           />
           <h2>
             Solution{" "}
-            <a href="#" onClick={applyNextSwap}>
+            <a href="javascript:void(0)" onClick={applyNextSwap}>
               (apply next swap)
             </a>
             :
