@@ -115,6 +115,7 @@ function _divideGroupFurther(
   squareLookup: Array<SquareLookupEntry>
 ): Set<Set<SquareLookupEntry>> {
   const groups = new Set<Set<SquareLookupEntry>>();
+  const originalSquareLookup = squareLookup;
 
   while (squareLookup.length) {
     const curGroup = new Set<SquareLookupEntry>();
@@ -143,10 +144,17 @@ function _divideGroupFurther(
         if (finalSquare !== null) {
           curGroup.add(finalSquare);
           break;
-        } else {
+        } else if (candidatesForNext.size > 0) {
           curGroup.add(cur);
           seenLetters.add(cur.end);
           cur = [...candidatesForNext][0]!;
+        } else {
+          // TODO: This case should not happen but need to better understand the
+          // data structures. This essentials "bails out" for a suboptimal
+          // solution when it cant divide the group further
+          return new Set<Set<SquareLookupEntry>>([
+            new Set<SquareLookupEntry>(originalSquareLookup),
+          ]);
         }
       }
     }

@@ -9,6 +9,7 @@ import {
 } from "./lib/board";
 import { possibleSolutionsFromBoard, renderSolution } from "./lib/solution";
 import { Swap, findSwaps } from "./lib/swaps";
+import { findBestSwap } from "./lib/swap_choser";
 import "./App.css";
 
 const LETTERS = [
@@ -295,7 +296,6 @@ class App extends React.Component<
   {},
   {
     board: Board<Tile>;
-    editing: Boolean;
     solution: Board<Letter> | null;
     swaps: Array<Swap>;
   }
@@ -303,29 +303,28 @@ class App extends React.Component<
   constructor() {
     super({});
     this.state = {
-      editing: true,
       board: [
+        { letter: "G", color: Color.Green },
+        { letter: "R", color: Color.Green },
+        { letter: "E", color: Color.Yellow },
         { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
-        { letter: "A", color: Color.Grey },
+        { letter: "E", color: Color.Green },
+        { letter: "V", color: Color.Grey },
+        { letter: "R", color: Color.Grey },
+        { letter: "C", color: Color.Yellow },
+        { letter: "O", color: Color.Grey },
+        { letter: "I", color: Color.Yellow },
+        { letter: "I", color: Color.Green },
+        { letter: "P", color: Color.Grey },
+        { letter: "F", color: Color.Grey },
+        { letter: "L", color: Color.Grey },
+        { letter: "N", color: Color.Green },
+        { letter: "B", color: Color.Grey },
+        { letter: "T", color: Color.Green },
+        { letter: "A", color: Color.Yellow },
+        { letter: "R", color: Color.Yellow },
+        { letter: "V", color: Color.Grey },
+        { letter: "T", color: Color.Green },
       ],
       swaps: [],
       solution: null,
@@ -334,8 +333,10 @@ class App extends React.Component<
 
   render() {
     const generateSolution = () => {
-      this.setState({ editing: false });
       const possibleSolutions = possibleSolutionsFromBoard(this.state.board);
+      const startStr = transformBoard(this.state.board, (t) => t.letter).join(
+        ""
+      );
 
       if (possibleSolutions.size !== 1) {
         console.error(possibleSolutions);
@@ -344,26 +345,19 @@ class App extends React.Component<
           console.log(renderSolution(solution));
         }
 
-        window.alert("Found multiple/no solutions!");
-        this.setState({ editing: true });
-        return;
+        const bestSwap = findBestSwap(startStr, new Set(possibleSolutions));
+        this.setState({ swaps: [bestSwap], solution: null });
+      } else {
+        const solution = [...possibleSolutions][0]!;
+        const swaps = findSwaps(startStr, solution);
+        this.setState({
+          solution: [...solution] as Board<Letter>,
+          swaps,
+        });
       }
-
-      const solution = [...possibleSolutions][0]!;
-      const swaps = findSwaps(
-        transformBoard(this.state.board, (t) => t.letter).join(""),
-        solution
-      );
-      this.setState({
-        solution: [...solution] as Board<Letter>,
-        swaps,
-      });
     };
 
     const applyNextSwap = () => {
-      if (this.state.swaps.length < 1) {
-        alert("no more swaps!");
-      }
       const swap = this.state.swaps[0]!;
       swap.sort();
       const [from, to] = swap;
@@ -373,12 +367,16 @@ class App extends React.Component<
 
       const newA = {
         letter: b.letter,
-        color: getColorOfSquare(b.letter, this.state.solution!, from),
+        color: this.state.solution
+          ? getColorOfSquare(b.letter, this.state.solution!, from)
+          : Color.Grey,
       };
 
       const newB = {
         letter: a.letter,
-        color: getColorOfSquare(a.letter, this.state.solution!, to),
+        color: this.state.solution
+          ? getColorOfSquare(a.letter, this.state.solution!, to)
+          : Color.Grey,
       };
 
       let i = 0;
@@ -398,18 +396,50 @@ class App extends React.Component<
       this.setState({ board: newBoard as Board<Tile>, swaps: newSwaps });
     };
 
-    if (this.state.editing) {
-      return (
-        <div className="App">
-          <BoardComponent
-            board={this.state.board}
-            editable={true}
-            onBoardChange={(board) => this.setState({ board })}
-          />
+    if (this.state.solution === null) {
+      if (this.state.swaps.length > 0) {
+        return (
+          <div className="App">
+            <BoardComponent
+              board={this.state.board}
+              editable={true}
+              onBoardChange={(board) => this.setState({ board })}
+            />
+            <h2>
+              Suggested swap{" "}
+              <button
+                style={{ textDecoration: "underline", cursor: "pointer" }}
+                onClick={applyNextSwap}
+              >
+                (apply next swap and manually update colors)
+              </button>
+              :
+            </h2>
+            <ol>
+              {this.state.swaps.map((swap) => {
+                return (
+                  <li>
+                    Square{swap[0]} 🔁 Square{swap[1]}
+                  </li>
+                );
+              })}
+              ;
+            </ol>
+          </div>
+        );
+      } else {
+        return (
+          <div className="App">
+            <BoardComponent
+              board={this.state.board}
+              editable={true}
+              onBoardChange={(board) => this.setState({ board })}
+            />
 
-          <button onClick={generateSolution}>Finalize</button>
-        </div>
-      );
+            <button onClick={generateSolution}>Finalize</button>
+          </div>
+        );
+      }
     } else {
       return (
         <div className="App">
@@ -419,7 +449,14 @@ class App extends React.Component<
             onBoardChange={(board) => this.setState({ board })}
           />
           <h2>
-            Solution <a onClick={applyNextSwap}>(apply next swap)</a>:
+            Total solution{" "}
+            <button
+              style={{ textDecoration: "underline", cursor: "pointer" }}
+              onClick={applyNextSwap}
+            >
+              (apply next swap)
+            </button>
+            :
           </h2>
           <ol>
             {this.state.swaps.map((swap) => {
