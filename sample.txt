@@ -1,5 +1,0 @@
-ASCOT
-D R H
-EMOTE
-P S R
-TASTE
