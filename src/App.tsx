@@ -7,7 +7,7 @@ import {
   Color,
   transformBoard,
 } from "./lib/board";
-import { possibleSolutionsFromBoard } from "./lib/solution";
+import { possibleSolutionsFromBoard, renderSolution } from "./lib/solution";
 import { Swap, findSwaps } from "./lib/swaps";
 import "./App.css";
 
@@ -339,6 +339,11 @@ class App extends React.Component<
 
       if (possibleSolutions.size !== 1) {
         console.error(possibleSolutions);
+
+        for (const solution of possibleSolutions) {
+          console.log(renderSolution(solution));
+        }
+
         window.alert("Found multiple/no solutions!");
         this.setState({ editing: true });
         return;
