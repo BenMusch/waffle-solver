@@ -304,27 +304,27 @@ class App extends React.Component<
     super({});
     this.state = {
       board: [
-        { letter: "G", color: Color.Green },
-        { letter: "R", color: Color.Green },
-        { letter: "E", color: Color.Yellow },
         { letter: "A", color: Color.Grey },
-        { letter: "E", color: Color.Green },
-        { letter: "V", color: Color.Grey },
-        { letter: "R", color: Color.Grey },
-        { letter: "C", color: Color.Yellow },
-        { letter: "O", color: Color.Grey },
-        { letter: "I", color: Color.Yellow },
-        { letter: "I", color: Color.Green },
-        { letter: "P", color: Color.Grey },
-        { letter: "F", color: Color.Grey },
-        { letter: "L", color: Color.Grey },
-        { letter: "N", color: Color.Green },
-        { letter: "B", color: Color.Grey },
-        { letter: "T", color: Color.Green },
-        { letter: "A", color: Color.Yellow },
-        { letter: "R", color: Color.Yellow },
-        { letter: "V", color: Color.Grey },
-        { letter: "T", color: Color.Green },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
+        { letter: "A", color: Color.Grey },
       ],
       swaps: [],
       solution: null,
@@ -436,7 +436,7 @@ class App extends React.Component<
               onBoardChange={(board) => this.setState({ board })}
             />
 
-            <button onClick={generateSolution}>Finalize</button>
+            <button onClick={generateSolution}>Get next move(s)</button>
           </div>
         );
       }
